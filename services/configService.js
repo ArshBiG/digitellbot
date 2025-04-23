@@ -2,8 +2,9 @@ const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const qrcode = require('qrcode');
 const { generateSubId } = require('../bot/utils');
+const { saveUser, getUser } = require('./db'); // اضافه کردن این برای دسترسی به داده‌های کاربران
 
-async function createConfig(durationMonths, finalRemark, configRemark) {
+async function createConfig(userId, durationMonths, finalRemark, configRemark) {
   const expiryTime = Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000;
   const uuid = uuidv4();
   const subId = generateSubId();
@@ -43,6 +44,19 @@ async function createConfig(durationMonths, finalRemark, configRemark) {
   const configLink = `vless://${uuid}@wizwiz.zirzaminazad.ir:14471?security=reality&encryption=none&pbk=8MaLF7JzqSRPy8neJk4pOaxAqU6_8sYA6lYtJttaiEU&fp=firefox&spx=/&type=tcp&sni=microsoft.com&sid=8c1209d2ba6a7e#${encodeURIComponent(configRemark)}`;
   const qr = await qrcode.toDataURL(configLink);
   const qrBuffer = Buffer.from(qr.split(",")[1], 'base64');
+
+  // حالا باید این لینک را به کاربر ذخیره کنیم
+  const user = getUser(userId);
+  if (user) {
+    const newConfig = {
+      name: configRemark,
+      country: "نامشخص", // اگر کشور مربوطه را دارید، می‌توانید آن را اضافه کنید.
+      duration: durationMonths, 
+      link: configLink
+    };
+    user.configs.push(newConfig);
+    saveUser(userId, user); // ذخیره کردن تغییرات در فایل JSON
+  }
 
   return { link: configLink, qrBuffer };
 }
