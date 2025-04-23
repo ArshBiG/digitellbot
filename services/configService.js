@@ -2,7 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const qrcode = require('qrcode');
 const { generateSubId } = require('../bot/utils');
-const { saveUser, getUser } = require('./db'); // اضافه کردن این برای دسترسی به داده‌های کاربران
+const { saveUser, getUser } = require('../bot/db'); // اضافه کردن این برای دسترسی به داده‌های کاربران
 
 async function createConfig(userId, durationMonths, finalRemark, configRemark) {
   const expiryTime = Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000;
