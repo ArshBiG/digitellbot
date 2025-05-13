@@ -1,29 +1,26 @@
 require('dotenv').config();
+require('./database');
 
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
-const bodyParser = require('body-parser');
 
-const TOKEN = '7070941220:AAHKLHE657mz98D1-iWVJl7S4lW4oBYbbNY';
-const WEBHOOK_URL = 'https://lazy-socks-tease.loca.lt/webhook';
+const TOKEN = '7725831912:AAHBspgXhbzZKKVa61CNfQWQ0CK4WyFTDOs';
+const WEBHOOK_URL = 'https://e120-2001-ac8-22-1003-00-1dd6.ngrok-free.app/';
 
 const bot = new TelegramBot(TOKEN, { webHook: true });
 bot.setWebHook(WEBHOOK_URL);
 
-// Define Express app
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Webhook route to receive updates
-app.post('/webhook', (req, res) => {
+app.post('/', (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
 
-// Start Express server
-const PORT = 3000; // You can change this to process.env.PORT if you use a .env file
+require('./bot/handlers')(bot);
+
+const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-console.log('Bot is set up with webhook at', WEBHOOK_URL);

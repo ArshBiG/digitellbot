@@ -1,23 +1,24 @@
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const qrcode = require('qrcode');
-const { generateSubId } = require('../bot/utils');
-const { saveUser, getUser } = require('../bot/db'); // اضافه کردن این برای دسترسی به داده‌های کاربران
+// const { generateSubId } = require('../bot/utils');
+const User = require('../models/User');
 
-async function createConfig(userId, durationMonths, finalRemark, configRemark) {
+
+async function createConfig(subId, durationMonths, finalRemark, configRemark, totalGB = 0) {
   const expiryTime = Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000;
   const uuid = uuidv4();
-  const subId = generateSubId();
-
+  // const subId = generateSubId();
+  
   const payload = {
-    id: 1,
+    id: 2,
     settings: JSON.stringify({
       clients: [{
         id: uuid,
         flow: "",
         email: finalRemark,
         limitIp: 0,
-        totalGB: 0,
+        totalGB,
         expiryTime,
         enable: true,
         tgId: "",
@@ -29,36 +30,47 @@ async function createConfig(userId, durationMonths, finalRemark, configRemark) {
   };
 
   const res = await axios.post(
-    'https://wizwiz.zirzaminazad.ir:35766/ZrtvG2CKwMQ7srE/panel/inbound/addClient',
+    'https://sarzaminshad.zirzaminazad.ir:56766/digitell/xui/inbound/addClient',
     payload,
     {
       headers: {
-        'Cookie': '3x-ui=MTc0NTM1ODUzNnxEWDhFQVFMX2dBQUJFQUVRQUFCMV80QUFBUVp6ZEhKcGJtY01EQUFLVEU5SFNVNWZWVk5GVWhoNExYVnBMMlJoZEdGaVlYTmxMMjF2WkdWc0xsVnpaWExfZ1FNQkFRUlZjMlZ5QWYtQ0FBRUVBUUpKWkFFRUFBRUlWWE5sY201aGJXVUJEQUFCQ0ZCaGMzTjNiM0prQVF3QUFRdE1iMmRwYmxObFkzSmxkQUVNQUFBQUZQLUNFUUVDQVFWaFpHMXBiZ0VGWVdSdGFXNEF8GJbaa4C6ltzsmS6qbf1xLqG6i2SKadt_36aYbWfkmlM=',
+        'Cookie': 'x-ui=MTc0Njk4Mjk3OXxEWDhFQVFMX2dBQUJFQUVRQUFCbF80QUFBUVp6ZEhKcGJtY01EQUFLVEU5SFNVNWZWVk5GVWhoNExYVnBMMlJoZEdGaVlYTmxMMjF2WkdWc0xsVnpaWExfZ1FNQkFRUlZjMlZ5QWYtQ0FBRURBUUpKWkFFRUFBRUlWWE5sY201aGJXVUJEQUFCQ0ZCaGMzTjNiM0prQVF3QUFBQVVfNElSQVFJQkJXRmtiV2x1QVFWaFpHMXBiZ0E9fC85sApR-BFXYkZI9XjZkzhBIl2_31v-fGmCw2G3twIF',
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
       },
       withCredentials: true
     }
-  );
-
-  const configLink = `vless://${uuid}@wizwiz.zirzaminazad.ir:14471?security=reality&encryption=none&pbk=8MaLF7JzqSRPy8neJk4pOaxAqU6_8sYA6lYtJttaiEU&fp=firefox&spx=/&type=tcp&sni=microsoft.com&sid=8c1209d2ba6a7e#${encodeURIComponent(configRemark)}`;
-  const qr = await qrcode.toDataURL(configLink);
+  ).catch(err => {
+    console.error('❌ خطا در ارسال درخواست:', err.response ? err.response.data : err.message);
+  });
+  
+  // console.log('✅ پاسخ سرور:', res ? res.data : 'بدون پاسخ');
+  const sanitizedConfigRemark = configRemark ? encodeURIComponent(configRemark) : '';
+  const sid = '1175519234';
+  const link = `vless://${uuid}@sarzaminshad.zirzaminazad.ir:31531?type=tcp&security=reality&pbk=ZyMesTo3XD2JDoNwuUndCohohEYdumNW7BJILq6wtGY&fp=firefox&sni=speedtest.net&sid=${sid}&spx=%2F#${sanitizedConfigRemark}`;
+  const linkv6 = `vless://${uuid}@[2a01:4f8:1c1e:597b::1]:31531?type=tcp&security=reality&pbk=ZyMesTo3XD2JDoNwuUndCohohEYdumNW7BJILq6wtGY&fp=firefox&sni=speedtest.net&sid=${sid}&spx=%2F#${sanitizedConfigRemark}`;
+  const qr = await qrcode.toDataURL(link);
   const qrBuffer = Buffer.from(qr.split(",")[1], 'base64');
 
-  // حالا باید این لینک را به کاربر ذخیره کنیم
-  const user = getUser(userId);
-  if (user) {
-    const newConfig = {
-      name: configRemark,
-      country: "نامشخص", // اگر کشور مربوطه را دارید، می‌توانید آن را اضافه کنید.
-      duration: durationMonths, 
-      link: configLink
-    };
-    user.configs.push(newConfig);
-    saveUser(userId, user); // ذخیره کردن تغییرات در فایل JSON
+  let user = await User.findOne({ subId });
+  if (!user) {
+    user = new User({ subId });
   }
 
-  return { link: configLink, qrBuffer };
+  // اضافه کردن کانفیگ
+  user.configs.push({
+    link,
+    name: finalRemark,
+    duration: durationMonths,
+    expiresAt: new Date(expiryTime),
+    server: 'sarzaminshad.zirzaminazad.ir:31531',
+    sni: 'speedtest.net',
+    pbk: 'ZyMesTo3XD2JDoNwuUndCohohEYdumNW7BJILq6wtGY',
+  });
+
+  await user.save();
+
+  return {linkv6, link, qrBuffer };
 }
 
 module.exports = { createConfig };
