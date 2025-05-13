@@ -5,7 +5,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 
 const TOKEN = '7725831912:AAHBspgXhbzZKKVa61CNfQWQ0CK4WyFTDOs';
-const WEBHOOK_URL = 'https://e120-2001-ac8-22-1003-00-1dd6.ngrok-free.app/';
+const WEBHOOK_URL = 'https://digitellbot.zirzaminazad.ir/';
 
 const bot = new TelegramBot(TOKEN, { webHook: true });
 bot.setWebHook(WEBHOOK_URL);
