@@ -16,7 +16,6 @@ async function handleSteps(bot, msg, sessions) {
   const state = session?.state;
   const step = session?.step;
 
-  // مرحله اول: انتخاب مدت زمان
   if (text === 'خرید سرور') {
     sessions[chatId] = { step: 'choose_duration' };
     bot.sendMessage(chatId, '⏳ مدت زمان سرویس رو انتخاب کن:', {
